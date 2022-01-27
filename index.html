@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>The COVIDhub Forecaster Landscape</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Daniel J. McDonald" />
+    <meta name="date" content="2022-01-28" />
+    <script src="index_files/header-attrs/header-attrs.js"></script>
+    <script src="index_files/htmlwidgets/htmlwidgets.js"></script>
+    <script src="index_files/pymjs/pym.v1.js"></script>
+    <script src="index_files/widgetframe-binding/widgetframe.js"></script>
+    <link rel="stylesheet" href="src/xaringan-themer.css" type="text/css" />
+    <link rel="stylesheet" href="src/slides-style.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+
+
+
+
+
+
+
+
+
+
+layout: true
+
+&lt;div class="my-footer"&gt;&lt;span&gt;&lt;a href="https://dajmcdon.github.io/delphi-forecast-landscape" style="color:white"&gt;dajmcdon.github.io/delphi-forecast-landscape&lt;/a&gt;&lt;/span&gt;&lt;/div&gt; 
+
+---
+background-image: url("gfx/cover-1.svg")
+background-size: contain
+background-position: top
+
+&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;
+
+
+
+.center[# The COVIDhub Forecaster Landscape]
+
+
+.pull-left[
+###Daniel J. McDonald
+###University of British Columbia
+####CMStatistics &amp;mdash; 28 January 2022
+]
+
+---
+
+## The Forecasing task
+
+
+.pull-left-wide[
+* Every week, submit forecasts to [COVID-19 **Forecast**Hub](https://covid19forecasthub.org)
+
+* The first forecasts were submitted on 20 July 2020
+
+* Originally "State Deaths"
+
+* Added "County Cases" a bit later, and eventually "Hospitalizations"
+
+* Hub also collects (now) a few other targets
+]
+
+.pull-right-narrow[
+![](https://covid19forecasthub.org/images/forecast-hub-logo_DARKBLUE.png)
+]
+
+
+--
+
+### The goal
+
+* Forecasts from many teams are combined into an "ensemble"
+
+* The ensemble generally has the best performance, and is the official [CDC Forecast](https://covid.cdc.gov/covid-data-tracker/#forecasting)
+
+* Some members of ForecastHub and Delphi collaborate on [Ensemble creation](https://forecasters.org/blog/2020/10/28/comparing-ensemble-approaches-for-short-term-probabilistic-covid-19-forecasts-in-the-u-s/)
+
+---
+
+## The Forecasts
+
+
+* "point" forecasts and "quantiles"
+
+* Predict 1-4 epiweeks ahead (some targets)
+
+* Predict 0-28 days ahead (hospitalizations)
+
+* Some teams produce longer-term forecasts ...
+
+
+
+&lt;img src="gfx/cal-deaths-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## The Forecasters
+
+&lt;img src="gfx/all-teams-6mos.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Hospitalization forecasters
+
+&lt;img src="gfx/hosp-teams.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+--
+
+.pull-left[
+* BPagano - SIR 
+* CMU - Time Series
+* Colorado (4 versions) - SEIR, different scenarios
+* Georgia Tech - Deep learning...
+* IHME (rarely) - SEIR
+* Johns Hopkins (3 in Applied Physics) - SEIR, Time series, ensemble
+* Johns Hopkins (other, Infection Dynamics) - SEIR
+]
+
+.pull-right[
+* Dean Karlen (Physicist at UVic) - SEIR type
+* MOBS-Gleam - Agent based mobility model
+* USC - SEIR
+* UVA - Ensemble of VAR, LSTM, SEIR
+* Prolix - "Offsets obtained by correlations, best linear approximation of reproduction rates (using vaccination  approximation) by least euclidean distance, and linear prediction."
+]
+
+---
+
+## Time series (simplification)
+
+&gt; On day `\(t\)`, model hospitalizations at day `\(t+a\)` as a function of today's hospitalizations and those in the recent past.
+
+
+.secondary[For example:]
+
+`$$\widehat{y}_{t+a} = a_{0} y_{t} + a_{7}y_{t-7} + a_{14} y_{t-14} + b_0 x_t + b_{7} x_{t-7}$$`
+
+.secondary[COVIDhub Baseline:]
+
+`$$\widehat{y}_{t+a} = y_{t}$$`
+
+* Seemingly, straightforward to do.
+* Performs surprisingly well, most of the time.
+* Not so good when you'd most want it to work.
+* Uses essentially no information about epidemics.
+
+---
+
+## SIR-type (compartmental) models - Stochastic Version
+
+(Borrowed heavily from [Cosma Shalizi](http://www.stat.cmu.edu/~cshalizi/dst/20/lectures/20/lecture-20.html), Ryan Tibshirani, [Dean Karlen](https://pypm.github.io/home/docs/studies/reports/Characterizing_spread.pdf))
+
+
+
+.pull-left[
+Suppose each of N people in a bucket at time t:
+
+1. .large[.fourth-color[Susceptible(t)]] : not sick, but could get sick
+1. .large[.secondary[Infected(t)]] : sick, can make others sick
+1. .large[.tertiary[Removed(t)]] : either recovered or dead; not sick, can't get sick, can't make anyone sick
+
+
+&lt;hr&gt;
+
+**Assume**: During period h, each .fourth-color[S] meets kh people.  
+**Assume**: Prob( .fourth-color[S] meets .secondary[I] and becomes .secondary[I] ) = c.  
+.fourth-color[So]: Prob( .fourth-color[S] `\(\rightarrow\)` .secondary[I] ) = `\(1 - (1 - c I(t)  / N )^{hk} \approx kchI(t) / N\)`  
+.fourth-color[So]: New .secondary[I] in time h `\(\sim Binom(S(t),\ kchI(t) / N)\)`  
+**Assume**: Prob( .secondary[I] `\(\rightarrow\)` .tertiary[R]) = `\(\gamma h\)`  
+.fourth-color[So]: Sew removals in time h `\(\sim Binom(I(t),\ \gamma h)\)`
+
+
+]
+
+.pull-right[
+
+<div id="htmlwidget-1513a6dc142764ed168c" style="width:100%;height:144px;" class="widgetframe html-widget"></div>
+<script type="application/json" data-for="htmlwidget-1513a6dc142764ed168c">{"x":{"url":"gfx//widgets/widget_sir-dag.html","options":{"xdomain":"*","allowfullscreen":false,"lazyload":false}},"evals":[],"jsHooks":[]}</script>
+
+]
+
+---
+
+
+.pull-left-wide[
+
+### Over-all equations:
+
+`\begin{aligned}
+C(t+h) &amp; =  \mathrm{Binom}\left(S(t),\ \frac{\beta}{N} h I(t)\right)\\
+D(t+h) &amp; =  \mathrm{Binom}\left(I(t),\ \gamma h\right)\\
+S(t+h) &amp; =  S(t) - C(t+h)\\
+I(t+h) &amp; =  I(t) + C(t+h) - D(t+h)\\
+R(t+h) &amp; =  R(t) + D(t+h)
+\end{aligned}`
+
+### In the deterministic limit, `\(N\rightarrow\infty,\ h\rightarrow 0\)`
+
+`\begin{aligned}
+N &amp;= S(0) + I(0) + R(0)\\
+\frac{dS}{dt} &amp; =  -\frac{\beta}{N} S(t)I(t)\\
+\frac{dI}{dt} &amp; =  \frac{\beta}{N} I(t)S(t) - \gamma I(t)\\
+\frac{dR}{dt} &amp; =  \gamma I(t)
+\end{aligned}`
+
+**"_the_ SIR model"** is often ambiguous between these
+
+]
+
+.pull-right-narrow[
+<div id="htmlwidget-123cd23148f995954baa" style="width:100%;height:252px;" class="widgetframe html-widget"></div>
+<script type="application/json" data-for="htmlwidget-123cd23148f995954baa">{"x":{"url":"gfx//widgets/widget_sir-dag-again.html","options":{"xdomain":"*","allowfullscreen":false,"lazyload":false}},"evals":[],"jsHooks":[]}</script>
+
+]
+
+---
+
+## Adding complexity
+
+
+.pull-left[
+
+* Vanilla SIR is not very interesting, not good for forecasting
+
+* Gives intuition for how an epidemic grows, hits a peak, decreases
+
+.secondary[Dean Karlen] [.secondary[pyPM]](https://pypm.github.io/home/)
+* Discrete difference version
+* Extra compartments for VOCs, Hospitalizations, deaths, ICU, others
+* Estimated with Conditional Least Squares
+* Includes "Case Injections", estimated and forced changes in `\(\beta\)`
+* (Really a whole `python` package for creating compartmental models)
+* No age structure
+* Location specific
+    
+]
+
+.pull-right[
+
+![:scale 80%](https://pypm.github.io/home/docs/pypmca/img/ref_model_2.png)
+]
+
+---
+## More complexity - Agent Based Models
+
+.secondary[Take it to the extreme:]
+
+ - Mirror the model for different age buckets
+ - Different types of activity people might engage in (lock downers, mixers, covid deniers, etc)
+ - Perhaps different cities or even suburbs
+ - Allow all these to interact with each other
+ 
+--
+ 
+.secondary[This is essentially an Agent Based Model]
+
+* Fix or calibrate a huge pile of parameters
+* Simulate how all these agents behave
+* Then see what happens
+
+---
+class: middle
+background-image: url("gfx/abm.png")
+background-size: contain
+background-position: right
+
+
+.pull-left[
+
+### Public Health Agency of Canada
+
+* Agent based model schematic
+
+* Used by PHAC for modelling impact to health care delivery in small areas 
+    - Remote Northern towns
+    - Indigenous communities
+
+* [.secondary[Overview]](https://nccid.ca/phac-agent-based-model-on-covid-19/)
+
+
+![](gfx/contact.png)
+
+]
+
+
+---
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script src="src/macros.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
