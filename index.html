@@ -6,9 +6,6 @@
     <meta name="author" content="Daniel J. McDonald" />
     <meta name="date" content="2022-01-28" />
     <script src="index_files/header-attrs/header-attrs.js"></script>
-    <script src="index_files/htmlwidgets/htmlwidgets.js"></script>
-    <script src="index_files/pymjs/pym.v1.js"></script>
-    <script src="index_files/widgetframe-binding/widgetframe.js"></script>
     <link rel="stylesheet" href="src/xaringan-themer.css" type="text/css" />
     <link rel="stylesheet" href="src/slides-style.css" type="text/css" />
   </head>
@@ -148,6 +145,7 @@ background-position: top
 * Uses essentially no information about epidemics.
 
 ---
+class: middle
 
 ## SIR-type (compartmental) models - Stochastic Version
 
@@ -177,15 +175,14 @@ Suppose each of N people in a bucket at time t:
 
 .pull-right[
 
-<div id="htmlwidget-1513a6dc142764ed168c" style="width:100%;height:144px;" class="widgetframe html-widget"></div>
-<script type="application/json" data-for="htmlwidget-1513a6dc142764ed168c">{"x":{"url":"gfx//widgets/widget_sir-dag.html","options":{"xdomain":"*","allowfullscreen":false,"lazyload":false}},"evals":[],"jsHooks":[]}</script>
+&lt;img src="gfx/sir-dag-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
 
 ]
 
 ---
+class: middle
 
-
-.pull-left-wide[
+.pull-left[
 
 ### Over-all equations:
 
@@ -197,7 +194,9 @@ I(t+h) &amp; =  I(t) + C(t+h) - D(t+h)\\
 R(t+h) &amp; =  R(t) + D(t+h)
 \end{aligned}`
 
-### In the deterministic limit, `\(N\rightarrow\infty,\ h\rightarrow 0\)`
+### In the deterministic limit, 
+
+`\(N\rightarrow\infty,\ h\rightarrow 0\)`
 
 `\begin{aligned}
 N &amp;= S(0) + I(0) + R(0)\\
@@ -210,9 +209,8 @@ N &amp;= S(0) + I(0) + R(0)\\
 
 ]
 
-.pull-right-narrow[
-<div id="htmlwidget-123cd23148f995954baa" style="width:100%;height:252px;" class="widgetframe html-widget"></div>
-<script type="application/json" data-for="htmlwidget-123cd23148f995954baa">{"x":{"url":"gfx//widgets/widget_sir-dag-again.html","options":{"xdomain":"*","allowfullscreen":false,"lazyload":false}},"evals":[],"jsHooks":[]}</script>
+.pull-right[
+&lt;img src="gfx/sir-dag-again-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
 
 ]
 
