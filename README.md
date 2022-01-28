@@ -1,5 +1,3 @@
-# Talk template repo
+# All Hands - The Forecaster Landscape
 
-1. Create a new repo with this template.
-2. Under settings, enable Github pages on `main` with `/(root)` as the target.
-3. Done
+Talk viewable at <https://dajmcdon.github.io/delphi-forecaster-landscape/>
